@@ -1,0 +1,69 @@
+version: '3'
+
+services:
+  # mariadb:
+  #   image: 'bitnami/mariadb:latest'
+  #   environment:
+  #     ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD}
+  #     MARIADB_USER: ${DB_USERNAME}
+  #     MARIADB_DATABASE: ${DB_DATABASE}
+  #     MARIADB_PASSWORD: ${DB_PASSWORD}
+
+  phpmyadmin:
+    image: 'phpmyadmin/phpmyadmin:latest'
+    depends_on:
+      - "${DB_HOST}"
+    ports:
+      - "81:80"
+    networks:
+      - laravel
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      PMA_ARBITRARY:
+      PMA_VERBOSE:
+      PMA_PORT:
+      PMA_HOST: ${DB_HOST}
+      PMA_PORT: 3306
+
+  mysql:
+    image: 'bitnami/mysql:latest'
+    volumes:
+      - db-data:/var/lib/mysql/data
+    networks:
+      - laravel
+    environment:
+      MYSQL_ROOT_USER: ${DB_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD}
+
+  myapp:
+    tty: true
+    image: 'bitnami/laravel:latest'
+    labels:
+      kompose.service.type: nodeport
+    networks:
+      - laravel
+    environment:
+      DB_HOST:
+      DB_DATABASE:
+      DB_USERNAME:
+      DB_PASSWORD:
+      DB_CONNECTION: ${DB_HOST}
+    depends_on:
+      - "${DB_HOST}"
+    ports:
+      - 3000:3000
+    volumes:
+      - ./src:/app
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  db-data:
